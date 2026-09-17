@@ -8,7 +8,7 @@ import torch.nn as nn
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
-from src.models.fusion.early_fusion import EarlyFusionModel
+from src.models.fusion.late_fusion import LateFusionModel
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -57,7 +57,11 @@ def load_data():
 
     df = pd.read_csv(DATA_PATH)
 
-    required_columns = {"patient_id", "label", "split"}
+    required_columns = {
+        "patient_id",
+        "label",
+        "split",
+    }
 
     missing_columns = required_columns - set(df.columns)
 
@@ -97,21 +101,35 @@ def prepare_features(df):
     return mri_columns, pet_columns
 
 
-def create_split_data(df, split, mri_columns, pet_columns):
+def create_split_data(
+    df,
+    split,
+    mri_columns,
+    pet_columns,
+):
     split_df = df[df["split"] == split].copy()
 
     if split_df.empty:
-        raise ValueError(f"No samples found for split: {split}")
+        raise ValueError(
+            f"No samples found for split: {split}"
+        )
 
-    mri_features = split_df[mri_columns].to_numpy(dtype=np.float32)
-    pet_features = split_df[pet_columns].to_numpy(dtype=np.float32)
+    mri_features = split_df[
+        mri_columns
+    ].to_numpy(dtype=np.float32)
 
-    labels = split_df["label"].map(LABEL_MAPPING)
+    pet_features = split_df[
+        pet_columns
+    ].to_numpy(dtype=np.float32)
+
+    labels = split_df["label"].map(
+        LABEL_MAPPING
+    )
 
     if labels.isna().any():
         unknown_labels = split_df.loc[
             labels.isna(),
-            "label"
+            "label",
         ].unique()
 
         raise ValueError(
@@ -120,13 +138,34 @@ def create_split_data(df, split, mri_columns, pet_columns):
 
     labels = labels.to_numpy(dtype=np.int64)
 
-    return split_df, mri_features, pet_features, labels
+    return (
+        split_df,
+        mri_features,
+        pet_features,
+        labels,
+    )
 
 
-def create_dataloader(mri_features, pet_features, labels, shuffle):
-    mri_tensor = torch.tensor(mri_features, dtype=torch.float32)
-    pet_tensor = torch.tensor(pet_features, dtype=torch.float32)
-    label_tensor = torch.tensor(labels, dtype=torch.long)
+def create_dataloader(
+    mri_features,
+    pet_features,
+    labels,
+    shuffle,
+):
+    mri_tensor = torch.tensor(
+        mri_features,
+        dtype=torch.float32,
+    )
+
+    pet_tensor = torch.tensor(
+        pet_features,
+        dtype=torch.float32,
+    )
+
+    label_tensor = torch.tensor(
+        labels,
+        dtype=torch.long,
+    )
 
     dataset = TensorDataset(
         mri_tensor,
@@ -141,35 +180,63 @@ def create_dataloader(mri_features, pet_features, labels, shuffle):
     )
 
 
-def train_one_epoch(model, dataloader, criterion, optimizer, device):
+def train_one_epoch(
+    model,
+    dataloader,
+    criterion,
+    optimizer,
+    device,
+):
     model.train()
 
     total_loss = 0.0
     correct = 0
     total = 0
 
-    for mri_features, pet_features, labels in dataloader:
+    for (
+        mri_features,
+        pet_features,
+        labels,
+    ) in dataloader:
+
         mri_features = mri_features.to(device)
         pet_features = pet_features.to(device)
         labels = labels.to(device)
 
         optimizer.zero_grad()
 
-        outputs = model(
+        (
+            final_logits,
+            _,
+            _,
+            _,
+        ) = model(
             mri_features,
             pet_features,
         )
 
-        loss = criterion(outputs, labels)
+        loss = criterion(
+            final_logits,
+            labels,
+        )
 
         loss.backward()
         optimizer.step()
 
-        total_loss += loss.item() * labels.size(0)
+        total_loss += (
+            loss.item()
+            * labels.size(0)
+        )
 
-        predictions = torch.argmax(outputs, dim=1)
+        predictions = torch.argmax(
+            final_logits,
+            dim=1,
+        )
 
-        correct += (predictions == labels).sum().item()
+        correct += (
+            predictions == labels
+        ).sum().item()
+
         total += labels.size(0)
 
     average_loss = total_loss / total
@@ -178,7 +245,12 @@ def train_one_epoch(model, dataloader, criterion, optimizer, device):
     return average_loss, accuracy
 
 
-def validate(model, dataloader, criterion, device):
+def validate(
+    model,
+    dataloader,
+    criterion,
+    device,
+):
     model.eval()
 
     total_loss = 0.0
@@ -186,23 +258,45 @@ def validate(model, dataloader, criterion, device):
     total = 0
 
     with torch.no_grad():
-        for mri_features, pet_features, labels in dataloader:
+        for (
+            mri_features,
+            pet_features,
+            labels,
+        ) in dataloader:
+
             mri_features = mri_features.to(device)
             pet_features = pet_features.to(device)
             labels = labels.to(device)
 
-            outputs = model(
+            (
+                final_logits,
+                _,
+                _,
+                _,
+            ) = model(
                 mri_features,
                 pet_features,
             )
 
-            loss = criterion(outputs, labels)
+            loss = criterion(
+                final_logits,
+                labels,
+            )
 
-            total_loss += loss.item() * labels.size(0)
+            total_loss += (
+                loss.item()
+                * labels.size(0)
+            )
 
-            predictions = torch.argmax(outputs, dim=1)
+            predictions = torch.argmax(
+                final_logits,
+                dim=1,
+            )
 
-            correct += (predictions == labels).sum().item()
+            correct += (
+                predictions == labels
+            ).sum().item()
+
             total += labels.size(0)
 
     average_loss = total_loss / total
@@ -211,27 +305,61 @@ def validate(model, dataloader, criterion, device):
     return average_loss, accuracy
 
 
-def generate_predictions(model, dataloader, patient_ids, labels, splits, device):
+def generate_predictions(
+    model,
+    dataloader,
+    patient_ids,
+    labels,
+    splits,
+    device,
+):
     model.eval()
 
     predictions = []
     probabilities = []
+    mri_probabilities = []
+    pet_probabilities = []
 
     with torch.no_grad():
-        for mri_features, pet_features, _ in dataloader:
+        for (
+            mri_features,
+            pet_features,
+            _,
+        ) in dataloader:
+
             mri_features = mri_features.to(device)
             pet_features = pet_features.to(device)
 
-            outputs = model(
+            (
+                _,
+                mri_probs,
+                pet_probs,
+                fused_probs,
+            ) = model(
                 mri_features,
                 pet_features,
             )
 
-            probs = torch.softmax(outputs, dim=1)
-            preds = torch.argmax(probs, dim=1)
+            preds = torch.argmax(
+                fused_probs,
+                dim=1,
+            )
 
-            predictions.extend(preds.cpu().numpy())
-            probabilities.extend(probs.cpu().numpy())
+            predictions.extend(
+                preds.cpu().numpy()
+            )
+
+            probabilities.extend(
+                fused_probs.cpu().numpy()
+            )
+
+            mri_probabilities.extend(
+                mri_probs.cpu().numpy()
+            )
+
+            pet_probabilities.extend(
+                pet_probs.cpu().numpy()
+            )
 
     prediction_df = pd.DataFrame(
         {
@@ -239,14 +367,49 @@ def generate_predictions(model, dataloader, patient_ids, labels, splits, device)
             "label": labels,
             "split": splits,
             "predicted_label": predictions,
-            "prob_CN": [prob[0] for prob in probabilities],
-            "prob_MCI": [prob[1] for prob in probabilities],
-            "prob_AD": [prob[2] for prob in probabilities],
+            "prob_CN": [
+                probability[0]
+                for probability in probabilities
+            ],
+            "prob_MCI": [
+                probability[1]
+                for probability in probabilities
+            ],
+            "prob_AD": [
+                probability[2]
+                for probability in probabilities
+            ],
+            "mri_prob_CN": [
+                probability[0]
+                for probability in mri_probabilities
+            ],
+            "mri_prob_MCI": [
+                probability[1]
+                for probability in mri_probabilities
+            ],
+            "mri_prob_AD": [
+                probability[2]
+                for probability in mri_probabilities
+            ],
+            "pet_prob_CN": [
+                probability[0]
+                for probability in pet_probabilities
+            ],
+            "pet_prob_MCI": [
+                probability[1]
+                for probability in pet_probabilities
+            ],
+            "pet_prob_AD": [
+                probability[2]
+                for probability in pet_probabilities
+            ],
         }
     )
 
     prediction_df["correct"] = (
-        prediction_df["label"].map(LABEL_MAPPING)
+        prediction_df["label"].map(
+            LABEL_MAPPING
+        )
         == prediction_df["predicted_label"]
     )
 
@@ -256,29 +419,36 @@ def generate_predictions(model, dataloader, patient_ids, labels, splits, device)
         2: "AD",
     }
 
-    prediction_df["predicted_label"] = prediction_df[
-        "predicted_label"
-    ].map(reverse_label_mapping)
+    prediction_df["predicted_label"] = (
+        prediction_df["predicted_label"].map(
+            reverse_label_mapping
+        )
+    )
 
     return prediction_df
-
-
 
 
 def main():
     set_seed(RANDOM_SEED)
 
     device = torch.device(
-        "cuda" if torch.cuda.is_available() else "cpu"
+        "cuda"
+        if torch.cuda.is_available()
+        else "cpu"
     )
 
     print(f"Using device: {device}")
 
     df = load_data()
 
-    print(f"Dataset shape: {df.shape}")
+    print(
+        f"Dataset shape: {df.shape}"
+    )
 
-    mri_columns, pet_columns = prepare_features(df)
+    (
+        mri_columns,
+        pet_columns,
+    ) = prepare_features(df)
 
     (
         train_df,
@@ -316,21 +486,46 @@ def main():
         pet_columns,
     )
 
-    print(f"Training samples: {len(train_df)}")
-    print(f"Validation samples: {len(validation_df)}")
-    print(f"Test samples: {len(test_df)}")
+    print(
+        f"Training samples: {len(train_df)}"
+    )
 
-    # Fit scalers ONLY on the training data.
+    print(
+        f"Validation samples: "
+        f"{len(validation_df)}"
+    )
+
+    print(
+        f"Test samples: {len(test_df)}"
+    )
+
+    # Fit scalers ONLY on training data.
     mri_scaler = StandardScaler()
     pet_scaler = StandardScaler()
 
-    train_mri = mri_scaler.fit_transform(train_mri)
-    validation_mri = mri_scaler.transform(validation_mri)
-    test_mri = mri_scaler.transform(test_mri)
+    train_mri = mri_scaler.fit_transform(
+        train_mri
+    )
 
-    train_pet = pet_scaler.fit_transform(train_pet)
-    validation_pet = pet_scaler.transform(validation_pet)
-    test_pet = pet_scaler.transform(test_pet)
+    validation_mri = mri_scaler.transform(
+        validation_mri
+    )
+
+    test_mri = mri_scaler.transform(
+        test_mri
+    )
+
+    train_pet = pet_scaler.fit_transform(
+        train_pet
+    )
+
+    validation_pet = pet_scaler.transform(
+        validation_pet
+    )
+
+    test_pet = pet_scaler.transform(
+        test_pet
+    )
 
     train_loader = create_dataloader(
         train_mri,
@@ -353,12 +548,14 @@ def main():
         shuffle=False,
     )
 
-    model = EarlyFusionModel(
+    model = LateFusionModel(
         mri_feature_dim=MRI_FEATURE_DIM,
         pet_feature_dim=PET_FEATURE_DIM,
-        hidden_dim=256,
+        hidden_dim=128,
         num_classes=NUM_CLASSES,
         dropout=0.3,
+        mri_weight=0.5,
+        pet_weight=0.5,
     ).to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -384,13 +581,21 @@ def main():
 
     checkpoint_path = (
         CHECKPOINT_DIR
-        / "early_fusion_best.pt"
+        / "late_fusion_best.pt"
     )
 
-    print("\nStarting Early Fusion training...\n")
+    print(
+        "\nStarting Late Fusion training...\n"
+    )
 
-    for epoch in range(1, EPOCHS + 1):
-        train_loss, train_accuracy = train_one_epoch(
+    for epoch in range(
+        1,
+        EPOCHS + 1,
+    ):
+        (
+            train_loss,
+            train_accuracy,
+        ) = train_one_epoch(
             model,
             train_loader,
             criterion,
@@ -398,7 +603,10 @@ def main():
             device,
         )
 
-        validation_loss, validation_accuracy = validate(
+        (
+            validation_loss,
+            validation_accuracy,
+        ) = validate(
             model,
             validation_loader,
             criterion,
@@ -423,8 +631,13 @@ def main():
             f"Val Acc: {validation_accuracy:.4f}"
         )
 
-        if validation_accuracy > best_validation_accuracy:
-            best_validation_accuracy = validation_accuracy
+        if (
+            validation_accuracy
+            > best_validation_accuracy
+        ):
+            best_validation_accuracy = (
+                validation_accuracy
+            )
 
             torch.save(
                 {
@@ -432,6 +645,8 @@ def main():
                     "mri_feature_dim": MRI_FEATURE_DIM,
                     "pet_feature_dim": PET_FEATURE_DIM,
                     "num_classes": NUM_CLASSES,
+                    "mri_weight": model.mri_weight,
+                    "pet_weight": model.pet_weight,
                     "label_mapping": LABEL_MAPPING,
                     "mri_scaler_mean": mri_scaler.mean_,
                     "mri_scaler_scale": mri_scaler.scale_,
@@ -445,7 +660,7 @@ def main():
 
     history_path = (
         RESULTS_DIR
-        / "early_fusion_training_history.csv"
+        / "late_fusion_training_history.csv"
     )
 
     history_df.to_csv(
@@ -456,18 +671,23 @@ def main():
     print("\nTraining complete.")
 
     print(
-        f"Best validation accuracy: "
+        "Best validation accuracy: "
         f"{best_validation_accuracy:.4f}"
     )
 
-    print(f"Model saved to: {checkpoint_path}")
-    print(f"Training history saved to: {history_path}")
+    print(
+        f"Model saved to: {checkpoint_path}"
+    )
 
-    # Load the best validation checkpoint before test evaluation.
+    print(
+        f"Training history saved to: "
+        f"{history_path}"
+    )
+
     checkpoint = torch.load(
-    checkpoint_path,
-    map_location=device,
-    weights_only=False,
+        checkpoint_path,
+        map_location=device,
+        weights_only=False,
     )
 
     model.load_state_dict(
@@ -490,25 +710,40 @@ def main():
         device,
     )
 
-    prediction_dir = RESULTS_DIR / "early_fusion"
+    prediction_dir = (
+        RESULTS_DIR
+        / "late_fusion"
+    )
 
     prediction_dir.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    prediction_path = prediction_dir / "predictions.csv"
+    prediction_path = (
+        prediction_dir
+        / "predictions.csv"
+    )
 
     test_predictions.to_csv(
         prediction_path,
         index=False,
     )
 
-    print(f"Predictions saved to: {prediction_path}")
-
     print("\nTest evaluation:")
-    print(f"Test loss: {test_loss:.4f}")
-    print(f"Test accuracy: {test_accuracy:.4f}")
+
+    print(
+        f"Test loss: {test_loss:.4f}"
+    )
+
+    print(
+        f"Test accuracy: {test_accuracy:.4f}"
+    )
+
+    print(
+        f"Predictions saved to: "
+        f"{prediction_path}"
+    )
 
 
 if __name__ == "__main__":

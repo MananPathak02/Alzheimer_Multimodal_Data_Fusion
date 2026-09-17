@@ -1,0 +1,93 @@
+
+# Multimodal Fusion Configuration
+# Development configuration for MRI + PET feature fusion.
+# Current experiments use synthetic dummy features for pipeline validation.
+
+data:
+  aligned_features:
+    path: data/dummy/features/aligned_multimodal_features.csv
+
+  splits:
+    train: train
+    validation: validation
+    test: test
+
+features:
+  mri:
+    prefix: mri_
+    dimension: 256
+
+  pet:
+    prefix: pet_
+    dimension: 256
+
+  number_of_classes: 3
+
+labels:
+  CN: 0
+  MCI: 1
+  AD: 2
+
+training:
+  batch_size: 16
+  learning_rate: 0.001
+  epochs: 30
+  random_seed: 42
+
+preprocessing:
+  scaling:
+    method: standard_scaler
+    fit_on_training_data_only: true
+    separate_scaler_per_modality: true
+
+fusion:
+  early:
+    enabled: true
+    method: concatenate_features
+    hidden_dimensions:
+      - 256
+      - 128
+    dropout: 0.3
+
+  intermediate:
+    enabled: true
+    modality_encoder_dimension: 128
+    fusion_hidden_dimensions:
+      - 128
+      - 64
+    dropout: 0.3
+
+  late:
+    enabled: true
+    method: weighted_probability_fusion
+    mri_weight: 0.5
+    pet_weight: 0.5
+    hidden_dimension: 128
+    dropout: 0.3
+
+outputs:
+  checkpoint_directory: checkpoints/fusion
+  results_directory: results/fusion
+
+  early:
+    checkpoint: checkpoints/fusion/early_fusion_best.pt
+    history: results/fusion/early_fusion_training_history.csv
+    predictions: results/fusion/early_fusion/predictions.csv
+
+  intermediate:
+    checkpoint: checkpoints/fusion/intermediate_fusion_best.pt
+    history: results/fusion/intermediate_fusion_training_history.csv
+    predictions: results/fusion/intermediate_fusion/predictions.csv
+
+  late:
+    checkpoint: checkpoints/fusion/late_fusion_best.pt
+    history: results/fusion/late_fusion_training_history.csv
+    predictions: results/fusion/late_fusion/predictions.csv
+
+development:
+  data_type: synthetic_dummy_features
+  scientific_results_allowed: false
+  note: >
+    Dummy features are used only to validate the multimodal fusion pipeline.
+    They must not be interpreted as clinical or scientific Alzheimer disease
+    performance results.
