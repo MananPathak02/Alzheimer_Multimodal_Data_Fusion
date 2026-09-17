@@ -1,0 +1,89 @@
+# ==============================
+# Python
+# ==============================
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ==============================
+# Jupyter
+# ==============================
+
+.ipynb_checkpoints/
+
+# ==============================
+# Medical Imaging Data
+# ==============================
+
+# Raw medical data
+data/raw/
+
+# Preprocessed medical data
+data/preprocessed/
+
+# Medical image formats
+*.nii
+*.nii.gz
+*.dcm
+
+# ==============================
+# Large Files
+# ==============================
+
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+
+# ==============================
+# Machine Learning Models
+# ==============================
+
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+checkpoints/
+
+# ==============================
+# Experiment Tracking
+# ==============================
+
+runs/
+wandb/
+mlruns/
+
+# ==============================
+# Generated Results
+# ==============================
+
+results/
+
+# ==============================
+# IDE
+# ==============================
+
+.vscode/
+.idea/
+
+# ==============================
+# Operating System
+# ==============================
+
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Logs
+# ==============================
+
+*.log
