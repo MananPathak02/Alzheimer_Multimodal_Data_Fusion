@@ -1,0 +1,87 @@
+# ==============================================================================
+# MRI Single-Modality Pipeline Configuration
+# Multi-Modal Data Fusion for Alzheimer's Disease Detection
+# ==============================================================================
+
+project:
+  name: "Alzheimer_MRI_Pipeline"
+  modality: "MRI"
+  random_seed: 42
+
+data:
+  # These values can be overridden by MRI_METADATA / MRI_DATA_DIR environment variables.
+  # For local runs, point them at your ADNI metadata CSV and slice_multiview directory.
+  metadata_path: "data/metadata/ADNI-1_Baseline_MRI_3_31_2026.csv"
+  images_dir: "data/MRI"
+
+  # Orientation subdirectories inside images_dir
+  views:
+    - axial
+    - coronal
+    - sagittal
+
+  # Image format specifications (224x224 grayscale)
+  image_size: [224, 224]
+  in_channels: 1
+
+  # Slice sampling configuration:
+  # We select a small, fixed number of representative slices per view per subject.
+  # This keeps the training practical while respecting subject-level grouping.
+  slices_per_view: 3
+  slice_sampling_strategy: "equidistant"  # 'equidistant' or 'middle'
+
+  # Missing-view handling
+  # Keep subjects missing one or more views if they still have a valid diagnosis.
+  allow_missing_views: true
+
+split:
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  stratify_by: "Group"
+  splits_dir: "data/splits"
+  split_summary_file: "outputs/split.csv"
+
+model:
+  name: "MultiViewMRIClassifier"
+  backbone: "resnet18"
+  pretrained: true
+  num_classes: 3
+  class_names: ["CN", "MCI", "AD"]
+  feature_dim: 256
+  dropout: 0.3
+  fusion_strategy: "mean_pooling"
+
+preprocessing:
+  normalize:
+    mean: [0.25]
+    std: [0.25]
+  augmentation:
+    enabled: true
+    random_horizontal_flip: true
+    random_rotation_degrees: 10
+    affine_translation: [0.05, 0.05]
+
+training:
+  batch_size: 8
+  epochs: 30
+  learning_rate: 0.0003
+  weight_decay: 0.00005
+  class_weights: "balanced"
+  scheduler: "cosine"
+  min_lr: 0.000001
+  early_stopping_patience: 8
+  num_workers: 0
+  label_smoothing: 0.05
+
+device:
+  preferred: "auto"
+
+outputs:
+  output_dir: "outputs"
+  checkpoints_dir: "outputs/checkpoints"
+  best_model_name: "best_mri_model.pth"
+  predictions_file: "outputs/mri_predictions.csv"
+  features_file: "outputs/mri_features.csv"
+  features_pt_file: "outputs/mri_features.pt"
+  metrics_file: "outputs/mri_metrics.json"

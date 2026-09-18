@@ -1,0 +1,12 @@
+{
+  "test_accuracy": 0.4166666666666667,
+  "test_macro_f1": 0.19607843137254902,
+  "test_balanced_accuracy": 0.2777777777777778,
+  "best_validation_f1": 0.4236111111111111,
+  "model_checkpoint": "outputs/checkpoints/best_mri_model.pth",
+  "class_names": [
+    "CN",
+    "MCI",
+    "AD"
+  ]
+}
