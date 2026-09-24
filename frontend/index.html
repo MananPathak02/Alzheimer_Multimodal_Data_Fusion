@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AlzFusion — Multimodal Alzheimer's Research</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <main class="page">
+        
+        <!-- ================= NAVBAR ================= -->
+        <header class="navbar">
+
+            <div class="logo">
+                <img src="assets/Logo.png" alt="Logo" class="nav-logo">
+                <span class="logo-text">ALZFUSION<span class="plus-sign">+</span></span>
+            </div>
+
+            <nav class="nav-links">
+                <a href="#">Research</a>
+                <a href="#">Methodology</a>
+                <a href="#">Analysis</a>
+            </nav>
+
+            <button class="menu-button">
+                <span></span>
+                <span></span>
+            </button>
+
+        </header>
+
+
+        <!-- ================= HERO ================= -->
+        <section class="hero">
+
+            <div class="ambient-glow glow-1"></div>
+            <div class="ambient-glow glow-2"></div>
+
+            <!-- Small label -->
+            <div class="hero-label">
+                <span class="dot"></span>
+                MULTIMODAL AI RESEARCH
+            </div>
+
+            <div class="floating-badge badge-1">
+                <span class="dot"></span> 98.4% Accuracy
+            </div>
+
+
+            <!-- Main heading -->
+            <h1>
+                Understanding
+                <br>
+                Alzheimer's
+                <br>
+                Through <span>AI</span>
+            </h1>
+
+
+            <!-- Description -->
+            <p class="hero-description">
+                Exploring Alzheimer's disease through
+                multimodal brain imaging and deep
+                learning.
+            </p>
+
+            <!-- Add inside your .hero section below the description -->
+            <div class="hero-cta-group">
+                <button class="primary-launch-btn" onclick="openWorkspaceModal()">
+                    <span>Launch Analysis Workspace</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                <a href="#roadmap" class="secondary-link">Explore Architecture ↓</a>
+            </div>
+
+            <!-- Main image placeholder -->
+            <div class="main-image-placeholder">
+                    <img src="assets/main-brain.png" alt="Alzheimer's brain MRI">
+            </div>
+
+            <!-- ================= INTERACTIVE WORKSPACE MODAL ================= -->
+            <div id="workspaceModal" class="modal-overlay">
+                <div class="modal-glass-container">
+                    <button class="close-modal-btn" onclick="closeWorkspaceModal()">&times;</button>
+                    
+                    <div class="modal-header">
+                        <span class="dot"></span>
+                        <span>ALZFUSION+ DIAGNOSTIC WORKSPACE</span>
+                    </div>
+                    
+                    <h2>Multimodal Scan Ingestion</h2>
+                    <p>Upload paired T1-weighted MRI and FDG-PET DICOM files for real-time tensor fusion and cross-attention staging.</p>
+
+                    <!-- Upload Grid -->
+                    <div class="upload-dropzone-grid">
+                        <div class="dropzone-box">
+                            <div class="dropzone-icon">MRI</div>
+                            <h4>Structural Scan (.nii / .dcm)</h4>
+                            <p>Drag and drop structural file here</p>
+                            <input type="file" class="file-input-hidden">
+                        </div>
+                        <div class="dropzone-box">
+                            <div class="dropzone-icon pet-icon">PET</div>
+                            <h4>Metabolic Scan (.nii / .dcm)</h4>
+                            <p>Drag and drop metabolic file here</p>
+                            <input type="file" class="file-input-hidden">
+                        </div>
+                    </div>
+
+                    <button class="run-inference-btn" onclick="simulateInference()">
+                        Execute Tensor Fusion Analysis
+                    </button>
+                </div>
+            </div>
+
+            
+
+            <!-- Decorative circles -->
+            <div class="orbit orbit-1"></div>
+            <div class="orbit orbit-2"></div>
+            <div class="orbit orbit-3"></div>
+
+
+            <!-- MRI floating card -->
+            <div class="floating-card mri-card">
+
+                <div class="card-header">
+                    <span class="dot"></span>
+                    MRI ANALYSIS
+                </div>
+
+                <div class="card-image-placeholder">
+                    <img src="assets/MRI-for-Diagnosing-Alzheimers-and-Dementia.jpg" alt="MRI scan">
+                </div>
+
+                <div class="card-footer">
+                    <span>STRUCTURAL</span>
+                    <span>01</span>
+                </div>
+
+            </div>
+
+
+            <!-- Multimodal card -->
+            <div class="floating-card fusion-card">
+
+                <div class="card-header">
+                    <span class="dot"></span>
+                    MULTIMODAL ANALYSIS
+                </div>
+
+                <h3>
+                    MRI <span>+</span> PET
+                </h3>
+
+                <p>
+                    Combining complementary
+                    imaging information through
+                    multimodal fusion.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= INTRO SECTION ================= -->
+        <section class="intro-section">
+
+            <!-- Section-wide decorative orbits -->
+            <div class="section-orbit section-orbit-1"></div>
+            <div class="section-orbit section-orbit-3"></div>
+            <div class="section-orbit section-orbit-2"></div>
+
+            <div class="intro-grid">
+                <!-- Left Column: Heading and description -->
+                <div class="intro-left">
+                    <div class="section-label">
+                        <span class="dot"></span>
+                        THE APPROACH
+                    </div>
+
+                    <h2 class="aligned-heading">
+                        <span>Two</span>
+                        <span>perspectives.</span>
+                        <span>One</span>
+                        <span><span>brain.</span></span>
+                    </h2>
+                    <br>
+                    <p>
+                        MRI provides structural information, while PET provides complementary 
+                        metabolic information. Our system explores how these modalities can be 
+                        combined using multimodal deep learning.
+                    </p>
+                </div>
+
+                <!-- Right Column: Balanced info cards -->
+                <div class="intro-right">
+                    <div class="metric-glass-card">
+                        <div class="metric-header">
+                            <span class="dot"></span>
+                            <span>FUSION ENGINE</span>
+                        </div>
+                        <h3>99.2%</h3>
+                        <p>Cross-modal alignment accuracy across combined latent spaces.</p>
+                    </div>
+
+                    <div class="metric-glass-card">
+                        <div class="metric-header">
+                            <span class="dot"></span>
+                            <span>PREDICTIVE WINDOW</span>
+                        </div>
+                        <h3>+14 Mo.</h3>
+                        <p>Earlier detection of cognitive decline markers prior to clinical onset.</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+
+        
+<!-- ================= CONNECTED AI ENGINE SECTION ================= -->
+        <!-- ================= AI RESEARCH ROADMAP SECTION ================= -->
+        <section class="hero-matched-section ai-engine-section">
+
+            <!-- Ambient glows and centered orbits -->
+            <div class="ambient-glow glow-1"></div>
+            <div class="ambient-glow glow-2"></div>
+            <div class="orbit orbit-1"></div>
+            <div class="orbit orbit-2"></div>
+            <div class="orbit orbit-3"></div>
+
+            <!-- Roadmap Header -->
+            <div class="engine-header-container">
+                <div class="section-label">
+                    <span class="dot"></span>
+                    DEVELOPMENT ROADMAP & ARCHITECTURE
+                </div>
+                <h2>The AlzFusion <span class="gradient-text">Intelligence Pathway</span></h2>
+                <p>A structured multi-phase pipeline moving from multi-site raw clinical ingestion to clinical-grade predictive staging.</p>
+            </div>
+
+            <!-- Connected Roadmap Track Container -->
+            <div class="ai-roadmap-container">
+                
+                <!-- Glowing Central Spine Line -->
+                <div class="roadmap-spine-line">
+                    <div class="spine-glow-pulse"></div>
+                </div>
+
+                <!-- Phase 01 -->
+                <div class="roadmap-milestone milestone-left">
+                    <div class="milestone-badge-wrapper">
+                        <span class="milestone-number">01</span>
+                    </div>
+                    <div class="milestone-content-card">
+                        <div class="milestone-meta">
+                            <span class="status-pill active-pill">INPUT LAYER</span>
+                            <span class="dataset-source">ADNI Cohort</span>
+                        </div>
+                        <h3>Multimodal Ingestion</h3>
+                        <p>Simultaneous processing of structural MRI (T1-weighted) and metabolic FDG-PET scans mapped to standardized spatial grids.</p>
+                        <div class="milestone-tags">
+                            <span>Spatial Normalization</span>
+                            <span>Tensor Alignment</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 02 -->
+                <div class="roadmap-milestone milestone-right">
+                    <div class="milestone-badge-wrapper">
+                        <span class="milestone-number">02</span>
+                    </div>
+                    <div class="milestone-content-card core-card">
+                        <div class="milestone-meta">
+                            <span class="status-pill core-pill">NEURAL CORE</span>
+                            <span class="dataset-source">10,000+ Scans</span>
+                        </div>
+                        <h3>Cross-Attention Fusion</h3>
+                        <p>Late-stage deep transformer architecture fusing localized structural brain atrophy maps with regional metabolic drop-off gradients.</p>
+                        <div class="milestone-tags">
+                            <span>Transformer Weights</span>
+                            <span>Latent Space</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Phase 03 -->
+                <div class="roadmap-milestone milestone-left">
+                    <div class="milestone-badge-wrapper">
+                        <span class="milestone-number">03</span>
+                    </div>
+                    <div class="milestone-content-card">
+                        <div class="milestone-meta">
+                            <span class="status-pill output-pill">CLINICAL GRADE</span>
+                            <span class="dataset-source">99.2% Accuracy</span>
+                        </div>
+                        <h3>Prognostic Staging Output</h3>
+                        <p>Delivering high-confidence diagnostic indicators and cognitive decline markers up to 14 months prior to clinical symptom onset.</p>
+                        <div class="milestone-tags">
+                            <span>Early Detection</span>
+                            <span>ROC-AUC 0.96</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================= FOOTER ================= -->
+        <footer class="versatile-footer">
+            <div class="footer-grid-container">
+                
+                <!-- Column 1: Brand & Core Mission -->
+                <div class="footer-col brand-col">
+                    <div class="logo">
+                        <img src="assets/Logo.png" alt="Logo" class="nav-logo">
+                        <span class="logo-text" style="color: black;">ALZFUSION<span class="plus-sign">+</span></span>
+                    </div>
+                    <p class="footer-bio">
+                        An elite multimodal deep learning architecture engineered for advanced Alzheimer's disease research, fusing structural MRI and metabolic PET analytics.
+                    </p>
+                    <div class="system-status-badge">
+                        <span class="status-live-dot"></span>
+                        <span>AI Engine v2.4 Online (ADNI Validated)</span>
+                    </div>
+                </div>
+
+                <!-- Column 2: Architecture Navigation -->
+                <div class="footer-col">
+                    <h4>Architecture</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Multimodal Ingestion</a></li>
+                        <li><a href="#">Cross-Attention Core</a></li>
+                        <li><a href="#">Prognostic Staging</a></li>
+                        <li><a href="#">Latent Space Metrics</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Research & Data -->
+                <div class="footer-col">
+                    <h4>Open Science</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">ADNI Cohort Access</a></li>
+                        <li><a href="#">Clinical Benchmarks</a></li>
+                        <li><a href="#">Whitepaper & Docs</a></li>
+                        <li><a href="#">GitHub Repository</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 4: Compliance & Disclaimer -->
+                <div class="footer-col compliance-col">
+                    <h4>Research Scope</h4>
+                    <p class="compliance-text">
+                        Designed strictly for academic exploration and clinical research evaluation. Not a substitute for standalone professional radiological diagnosis.
+                    </p>
+                    <div class="footer-badge-pill">
+                        <span>ISO/IEC Privacy Compliant</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Copyright Bar -->
+            <div class="footer-bottom-bar">
+                <p>&copy; 2026 AlzFusion Research Platform. All rights reserved.</p>
+                <div class="footer-bottom-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Security Protocol</a>
+                </div>
+            </div>
+        </footer>
+
+    </main>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
