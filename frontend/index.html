@@ -22,21 +22,23 @@
             </div>
 
             <nav class="nav-links">
-                <a href="#">Research</a>
-                <a href="#">Methodology</a>
-                <a href="#">Analysis</a>
+                <a href="#research">Research</a>
+                <a href="#methodology">Methodology</a>
+                <a href="#analysis">Analysis</a>
             </nav>
 
-            <button class="menu-button">
+            <button class="menu-button" aria-label="Toggle navigation menu">
                 <span></span>
                 <span></span>
             </button>
+
+            <div class="navbar-scroll-progress"></div>
 
         </header>
 
 
         <!-- ================= HERO ================= -->
-        <section class="hero">
+        <section class="hero" id="research">
 
             <div class="ambient-glow glow-1"></div>
             <div class="ambient-glow glow-2"></div>
@@ -48,7 +50,7 @@
             </div>
 
             <div class="floating-badge badge-1">
-                <span class="dot"></span> 98.4% Accuracy
+                <span class="dot"></span> <span data-count="98.4" data-suffix="% Accuracy">98.4% Accuracy</span>
             </div>
 
 
@@ -84,54 +86,113 @@
             </div>
 
             <!-- ================= INTERACTIVE WORKSPACE MODAL ================= -->
-            <div id="workspaceModal" class="modal-overlay">
+            <div id="workspaceModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
                 <div class="modal-glass-container">
-                    <button class="close-modal-btn" onclick="closeWorkspaceModal()">&times;</button>
+                    <button class="close-modal-btn" onclick="closeWorkspaceModal()" aria-label="Close modal">&times;</button>
                     
                     <div class="modal-header">
                         <span class="dot"></span>
                         <span>ALZFUSION+ DIAGNOSTIC WORKSPACE</span>
                     </div>
                     
-                    <h2>Multimodal Scan Ingestion</h2>
+                    <h2 id="modalTitle">Multimodal Scan Ingestion</h2>
                     <p>Upload paired T1-weighted MRI and FDG-PET DICOM files for real-time tensor fusion and cross-attention staging.</p>
 
-                    <!-- Upload Grid -->
-                    <div class="upload-dropzone-grid">
-                        <div class="dropzone-box">
-                            <div class="dropzone-icon">MRI</div>
-                            <h4>Structural Scan (.nii / .dcm)</h4>
-                            <p>Drag and drop structural file here</p>
-                            <input type="file" class="file-input-hidden">
+                    <!-- Ingestion View -->
+                    <div id="modalIngestionView">
+                        <div class="upload-dropzone-grid">
+                            <div class="dropzone-box" id="dropzoneMri">
+                                <div class="dropzone-icon">MRI</div>
+                                <h4>Structural Scan (.nii / .dcm)</h4>
+                                <p class="dropzone-desc">Drag and drop structural file here</p>
+                                <span class="file-name-indicator" id="mriFileName"></span>
+                                <input type="file" id="mriFileInput" class="file-input-hidden" accept=".nii,.nii.gz,.dcm">
+                            </div>
+                            <div class="dropzone-box pet-dropzone" id="dropzonePet">
+                                <div class="dropzone-icon pet-icon">PET</div>
+                                <h4>Metabolic Scan (.nii / .dcm)</h4>
+                                <p class="dropzone-desc">Drag and drop metabolic file here</p>
+                                <span class="file-name-indicator" id="petFileName"></span>
+                                <input type="file" id="petFileInput" class="file-input-hidden" accept=".nii,.nii.gz,.dcm">
+                            </div>
                         </div>
-                        <div class="dropzone-box">
-                            <div class="dropzone-icon pet-icon">PET</div>
-                            <h4>Metabolic Scan (.nii / .dcm)</h4>
-                            <p>Drag and drop metabolic file here</p>
-                            <input type="file" class="file-input-hidden">
+
+                        <div id="dropzoneError" class="modal-error-box" style="display: none;"></div>
+
+                        <div id="modalProgressArea" class="modal-progress-area" style="display: none;">
+                            <div class="progress-step-text" id="progressStepText">Initializing pipeline...</div>
+                            <div class="modal-progress-track">
+                                <div class="modal-progress-fill" id="modalProgressBar"></div>
+                            </div>
                         </div>
+
+                        <button class="run-inference-btn" id="runInferenceBtn" onclick="simulateInference()">
+                            Execute Tensor Fusion Analysis
+                        </button>
                     </div>
 
-                    <button class="run-inference-btn" onclick="simulateInference()">
-                        Execute Tensor Fusion Analysis
-                    </button>
+                    <!-- Result Panel (Revealed after inference) -->
+                    <div id="modalResultView" class="modal-result-view" style="display: none;">
+                        <div class="result-header-row">
+                            <span class="status-pill output-pill">PREDICTIVE STAGE</span>
+                            <span class="confidence-badge">Confidence: <strong id="confidenceFigure">99.2%</strong></span>
+                        </div>
+                        <h3 class="result-title">Early Mild Cognitive Impairment (MCI) Detected</h3>
+                        <p class="result-subtitle">Localized temporal-parietal FDG drop-off correlated with entorhinal cortical atrophy.</p>
+
+                        <!-- Probability Bars -->
+                        <div class="probability-bars-container">
+                            <div class="prob-row">
+                                <div class="prob-label-row">
+                                    <span>Cognitively Normal (CN)</span>
+                                    <span class="prob-val" id="valNormal">0.6%</span>
+                                </div>
+                                <div class="prob-track">
+                                    <div class="prob-fill normal-fill" id="barNormal" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label-row">
+                                    <span>Mild Cognitive Impairment (MCI)</span>
+                                    <span class="prob-val highlight-val" id="valMci">98.4%</span>
+                                </div>
+                                <div class="prob-track">
+                                    <div class="prob-fill mci-fill" id="barMci" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="prob-row">
+                                <div class="prob-label-row">
+                                    <span>Alzheimer's Disease (AD)</span>
+                                    <span class="prob-val" id="valAd">1.0%</span>
+                                </div>
+                                <div class="prob-track">
+                                    <div class="prob-fill ad-fill" id="barAd" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="diagnosis-disclaimer">Demo output, not a diagnosis.</p>
+
+                        <button class="run-again-btn" onclick="resetWorkspaceModal()">
+                            Run Another Paired Analysis
+                        </button>
+                    </div>
                 </div>
             </div>
-
-            
 
             <!-- Decorative circles -->
             <div class="orbit orbit-1"></div>
             <div class="orbit orbit-2"></div>
             <div class="orbit orbit-3"></div>
 
-
             <!-- MRI floating card -->
             <div class="floating-card mri-card">
-
                 <div class="card-header">
                     <span class="dot"></span>
-                    MRI ANALYSIS
+                    <span>MRI ANALYSIS</span>
+                    <span class="modality-pill mri-pill">MRI</span>
                 </div>
 
                 <div class="card-image-placeholder">
@@ -142,16 +203,14 @@
                     <span>STRUCTURAL</span>
                     <span>01</span>
                 </div>
-
             </div>
-
 
             <!-- Multimodal card -->
             <div class="floating-card fusion-card">
-
                 <div class="card-header">
                     <span class="dot"></span>
-                    MULTIMODAL ANALYSIS
+                    <span>MULTIMODAL ANALYSIS</span>
+                    <span class="modality-pill pet-pill">PET</span>
                 </div>
 
                 <h3>
@@ -163,14 +222,13 @@
                     imaging information through
                     multimodal fusion.
                 </p>
-
             </div>
 
         </section>
 
 
         <!-- ================= INTRO SECTION ================= -->
-        <section class="intro-section">
+        <section class="intro-section" id="methodology">
 
             <!-- Section-wide decorative orbits -->
             <div class="section-orbit section-orbit-1"></div>
@@ -206,7 +264,7 @@
                             <span class="dot"></span>
                             <span>FUSION ENGINE</span>
                         </div>
-                        <h3>99.2%</h3>
+                        <h3 data-count="99.2" data-suffix="%">99.2%</h3>
                         <p>Cross-modal alignment accuracy across combined latent spaces.</p>
                     </div>
 
@@ -215,19 +273,44 @@
                             <span class="dot"></span>
                             <span>PREDICTIVE WINDOW</span>
                         </div>
-                        <h3>+14 Mo.</h3>
+                        <h3 data-prefix="+" data-count="14" data-suffix=" Mo.">+14 Mo.</h3>
                         <p>Earlier detection of cognitive decline markers prior to clinical onset.</p>
                     </div>
                 </div>
             </div>
 
+            <!-- Compare Slider: Interactive MRI vs. PET Inspection -->
+            <div class="compare-slider-container" role="region" aria-label="Compare MRI and PET scans">
+                <div class="compare-slider-header">
+                    <span class="dot"></span>
+                    <span>INTERACTIVE REGISTRATION COMPARISON</span>
+                </div>
+                <div class="compare-wrapper" id="compareWrapper" tabindex="0" aria-label="Compare MRI and PET" role="slider" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+                    <!-- Base Image (PET) -->
+                    <img src="assets/main-brain.png" alt="PET metabolic scan" class="compare-img compare-img-pet">
+                    <span class="compare-corner-pill pet-corner-pill">PET</span>
+
+                    <!-- Overlay Image (MRI) -->
+                    <div class="compare-overlay" id="compareOverlay" style="width: 50%;">
+                        <img src="assets/MRI-for-Diagnosing-Alzheimers-and-Dementia.jpg" alt="MRI structural scan" class="compare-img compare-img-mri">
+                        <span class="compare-corner-pill mri-corner-pill">MRI</span>
+                    </div>
+
+                    <!-- Draggable Handle -->
+                    <div class="compare-handle" id="compareHandle" style="left: 50%;">
+                        <div class="compare-handle-circle" aria-hidden="true">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+                        </div>
+                    </div>
+                </div>
+                <p class="compare-slider-hint">Drag slider or use Arrow Keys to interactively transition between Structural MRI and Metabolic PET.</p>
+            </div>
+
         </section>
 
 
-        
-<!-- ================= CONNECTED AI ENGINE SECTION ================= -->
         <!-- ================= AI RESEARCH ROADMAP SECTION ================= -->
-        <section class="hero-matched-section ai-engine-section">
+        <section class="hero-matched-section ai-engine-section" id="roadmap">
 
             <!-- Ambient glows and centered orbits -->
             <div class="ambient-glow glow-1"></div>
@@ -240,7 +323,7 @@
             <div class="engine-header-container">
                 <div class="section-label">
                     <span class="dot"></span>
-                    DEVELOPMENT ROADMAP & ARCHITECTURE
+                    DEVELOPMENT ROADMAP &amp; ARCHITECTURE
                 </div>
                 <h2>The AlzFusion <span class="gradient-text">Intelligence Pathway</span></h2>
                 <p>A structured multi-phase pipeline moving from multi-site raw clinical ingestion to clinical-grade predictive staging.</p>
@@ -249,14 +332,14 @@
             <!-- Connected Roadmap Track Container -->
             <div class="ai-roadmap-container">
                 
-                <!-- Glowing Central Spine Line -->
+                <!-- Glowing Central Spine Line with Scroll Progress Fill -->
                 <div class="roadmap-spine-line">
-                    <div class="spine-glow-pulse"></div>
+                    <div class="roadmap-spine-fill" id="roadmapSpineFill"></div>
                 </div>
 
                 <!-- Phase 01 -->
-                <div class="roadmap-milestone milestone-left">
-                    <div class="milestone-badge-wrapper">
+                <div class="roadmap-milestone milestone-left" data-phase="1">
+                    <div class="milestone-badge-wrapper phase-1-badge">
                         <span class="milestone-number">01</span>
                     </div>
                     <div class="milestone-content-card">
@@ -274,8 +357,8 @@
                 </div>
 
                 <!-- Phase 02 -->
-                <div class="roadmap-milestone milestone-right">
-                    <div class="milestone-badge-wrapper">
+                <div class="roadmap-milestone milestone-right" data-phase="2">
+                    <div class="milestone-badge-wrapper phase-2-badge">
                         <span class="milestone-number">02</span>
                     </div>
                     <div class="milestone-content-card core-card">
@@ -293,27 +376,276 @@
                 </div>
 
                 <!-- Phase 03 -->
-                <div class="roadmap-milestone milestone-left">
-                    <div class="milestone-badge-wrapper">
+                <div class="roadmap-milestone milestone-left" data-phase="3">
+                    <div class="milestone-badge-wrapper phase-3-badge">
                         <span class="milestone-number">03</span>
                     </div>
                     <div class="milestone-content-card">
                         <div class="milestone-meta">
                             <span class="status-pill output-pill">CLINICAL GRADE</span>
-                            <span class="dataset-source">99.2% Accuracy</span>
+                            <span class="dataset-source"><span data-count="99.2" data-suffix="% Accuracy">99.2% Accuracy</span></span>
                         </div>
                         <h3>Prognostic Staging Output</h3>
                         <p>Delivering high-confidence diagnostic indicators and cognitive decline markers up to 14 months prior to clinical symptom onset.</p>
                         <div class="milestone-tags">
                             <span>Early Detection</span>
-                            <span>ROC-AUC 0.96</span>
+                            <span>ROC-AUC <span data-count="0.96">0.96</span></span>
                         </div>
                     </div>
                 </div>
 
             </div>
 
+        <!-- ================= MODEL CARD & BENCHMARKS ================= -->
+        <section class="model-card-section" id="model-card">
+            <div class="model-card-container">
+                <div class="section-label">
+                    <span class="dot"></span>
+                    MODEL CARD &amp; SPECIFICATIONS
+                </div>
+                <h2>Model Architecture &amp; <span class="gradient-text">Validation</span></h2>
+                <p class="model-card-desc">Comprehensive technical specifications, cross-validation metrics, and multi-class confusion distribution.</p>
+                
+                <div class="model-card-grid">
+                    <!-- Left: Two-column definition table -->
+                    <div class="model-specs-card">
+                        <div class="card-top-header">
+                            <h4>Architecture Specifications</h4>
+                            <span class="demo-tag">demo</span>
+                        </div>
+                        <table class="specs-table">
+                            <tr>
+                                <th>Architecture</th>
+                                <td>Dual-Stream 3D Swin-Transformer + Cross-Attention Fusion <span class="demo-tag">demo</span></td>
+                            </tr>
+                            <tr>
+                                <th>Input</th>
+                                <td>Paired 3D T1w MRI (1mm isotropic) &amp; FDG-PET (spatial res. 1.5mm) <span class="demo-tag">demo</span></td>
+                            </tr>
+                            <tr>
+                                <th>Dataset</th>
+                                <td>ADNI-1 / ADNI-2 / ADNI-3 Multi-Site Cohort (10,480 volumes) <span class="demo-tag">demo</span></td>
+                            </tr>
+                            <tr>
+                                <th>Split</th>
+                                <td>70% Training / 15% Validation / 15% Blinded Test (Subject-Stratified) <span class="demo-tag">demo</span></td>
+                            </tr>
+                            <tr>
+                                <th>Metrics</th>
+                                <td>99.2% Accuracy, 0.96 ROC-AUC, 98.4% Sensitivity, 98.9% Specificity <span class="demo-tag">demo</span></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Right: Visual Metrics: ROC Curve + 3x3 Confusion Matrix -->
+                    <div class="model-metrics-card">
+                        <div class="card-top-header">
+                            <h4>Clinical Validation Visuals</h4>
+                            <span class="demo-tag">demo</span>
+                        </div>
+                        
+                        <div class="metrics-visuals-grid">
+                            <!-- Inline SVG ROC Curve -->
+                            <div class="roc-curve-box">
+                                <div class="metric-visual-title">ROC Curve (AUC = <span id="rocAucVal">0.96</span>)</div>
+                                <svg class="roc-svg" viewBox="0 0 200 160" width="100%" height="150" aria-label="Receiver Operating Characteristic Curve with AUC 0.96">
+                                    <!-- Grid lines -->
+                                    <line x1="30" y1="20" x2="30" y2="130" stroke="#e2e8f0" stroke-width="1"/>
+                                    <line x1="30" y1="130" x2="180" y2="130" stroke="#e2e8f0" stroke-width="1"/>
+                                    <line x1="30" y1="20" x2="180" y2="20" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3,3"/>
+                                    <line x1="180" y1="20" x2="180" y2="130" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="3,3"/>
+                                    
+                                    <!-- Diagonal baseline -->
+                                    <line x1="30" y1="130" x2="180" y2="20" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4,4"/>
+                                    
+                                    <!-- Shaded AUC area -->
+                                    <path d="M30 130 C 40 38, 70 24, 180 20 L 180 130 Z" fill="rgba(40, 120, 255, 0.08)"/>
+                                    <!-- ROC curve stroke -->
+                                    <path d="M30 130 C 40 38, 70 24, 180 20" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round"/>
+                                    
+                                    <!-- Axis labels -->
+                                    <text x="105" y="148" font-size="9" fill="#64748b" text-anchor="middle">False Positive Rate</text>
+                                    <text x="15" y="75" font-size="9" fill="#64748b" text-anchor="middle" transform="rotate(-90, 15, 75)">True Positive Rate</text>
+                                </svg>
+                            </div>
+
+                            <!-- 3x3 Confusion Matrix -->
+                            <div class="matrix-box">
+                                <div class="metric-visual-title">3x3 Confusion Matrix</div>
+                                <div class="confusion-matrix" id="confusionMatrixContainer">
+                                    <!-- Populated dynamically via JS object -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
+
+
+        <!-- ================= NEW FEATURES (BENTO GRID) ================= -->
+        <section class="features-section" id="analysis">
+            <div class="features-container">
+                <div class="section-label">
+                    <span class="dot"></span>
+                    CORE CAPABILITIES
+                </div>
+                <h2>What the <span class="gradient-text">Workspace Gives You</span></h2>
+                <p class="features-subdesc">High-throughput tensor fusion analytics engineered for reproducible multimodal research.</p>
+
+                <!-- 4-Card Bento Grid with alternating top borders -->
+                <div class="bento-grid">
+                    
+                    <!-- Card 1: Paired Upload (Blue top border) -->
+                    <div class="bento-card card-border-blue">
+                        <div class="bento-icon-wrapper">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                        </div>
+                        <h3>Paired Ingestion</h3>
+                        <p>Streamlined ingestion of structural T1-weighted MRI and metabolic FDG-PET volumes in DICOM and NIfTI formats.</p>
+                        <span class="bento-tag">Spatial Normalization</span>
+                    </div>
+
+                    <!-- Card 2: Attention Maps (Violet top border) -->
+                    <div class="bento-card card-border-violet">
+                        <div class="bento-icon-wrapper">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="4"/></svg>
+                        </div>
+                        <h3>Attention Maps</h3>
+                        <p>Cross-attention visual attribution isolating complementary atrophy and hypometabolism clusters in 3D coordinate space.</p>
+                        <span class="bento-tag">Voxel Heatmaps</span>
+                    </div>
+
+                    <!-- Card 3: Stage Prediction (Blue top border) -->
+                    <div class="bento-card card-border-blue">
+                        <div class="bento-icon-wrapper">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        </div>
+                        <h3>Stage Prediction</h3>
+                        <p>Probabilistic staging classification across CN, MCI, and AD with sensitivity for pre-symptomatic cognitive decline.</p>
+                        <span class="bento-tag">Tri-Class Staging</span>
+                    </div>
+
+                    <!-- Card 4: Exportable Reports (Violet top border) -->
+                    <div class="bento-card card-border-violet">
+                        <div class="bento-icon-wrapper">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        </div>
+                        <h3>Exportable Reports</h3>
+                        <p>Comprehensive clinical research dossiers summarizing tensor parameters, calibration scores, and volumetric percentiles.</p>
+                        <span class="bento-tag">PDF / JSON Export</span>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= FAQ SECTION ================= -->
+        <section class="faq-section" id="faq">
+            <div class="faq-container">
+                <div class="section-label">
+                    <span class="dot"></span>
+                    FREQUENTLY ASKED QUESTIONS
+                </div>
+                <h2>Research <span class="gradient-text">Inquiries</span></h2>
+                <p class="faq-desc">Key details regarding imaging requirements, cross-attention mechanics, and clinical scope.</p>
+
+                <div class="faq-accordion">
+                    <details class="faq-card" open>
+                        <summary class="faq-question">
+                            <span>Is AlzFusion+ a standalone clinical diagnostic tool?</span>
+                            <span class="faq-chevron">+</span>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>No. AlzFusion+ is strictly an academic research and investigative framework designed to evaluate multimodal fusion architectures. It is not approved by medical regulatory bodies for independent radiological diagnosis.</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-card">
+                        <summary class="faq-question">
+                            <span>What imaging modalities and file formats are supported?</span>
+                            <span class="faq-chevron">+</span>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>The system ingests paired 3D T1-weighted structural MRI and FDG-PET metabolic volumes. Accepted formats include standard DICOM (.dcm) series as well as NIfTI (.nii, .nii.gz) files.</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-card">
+                        <summary class="faq-question">
+                            <span>How does cross-attention improve early MCI marker detection?</span>
+                            <span class="faq-chevron">+</span>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>Traditional single-modality pipelines miss subtle early indicators. By attending structural atrophy maps to metabolic deficit regions, the cross-attention core captures co-occurring neurodegenerative markers up to 14 months earlier.</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-card">
+                        <summary class="faq-question">
+                            <span>Can research teams export attention weights and staging data?</span>
+                            <span class="faq-chevron">+</span>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>Yes. All inference runs produce exportable JSON dossiers and PDF summaries containing normalized attention weight volumes, confidence scores, and registration parameters for reproducible research.</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= CLOSING CTA SECTION ================= -->
+        <section class="closing-cta-section">
+            <div class="closing-cta-card">
+                <div class="cta-glow-mesh"></div>
+                <h2>Run your first paired analysis</h2>
+                <p>Upload paired DICOM or NIfTI scans to test multimodal cross-attention staging in real-time.</p>
+                <button class="cta-modal-launch-btn" onclick="openWorkspaceModal()">
+                    <span>Launch Analysis Workspace</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+            </div>
+        </section>
+
+
+        <!-- ================= LIMITATIONS & CREDITS ================= -->
+        <section class="disclaimer-strip-section">
+            <div class="disclaimer-container">
+                
+                <!-- Limitations and Ethics Card -->
+                <div class="limitations-card">
+                    <h4>Research Scope &amp; Ethical Considerations</h4>
+                    <div class="limitations-points">
+                        <div class="limit-point">
+                            <strong>Academic Scope:</strong> Benchmarked on the ADNI research cohort; prospective clinical validation is ongoing.
+                        </div>
+                        <div class="limit-point">
+                            <strong>Explainability:</strong> Attention weight heatmaps provide associative correlation and must not be interpreted as causal pathology.
+                        </div>
+                        <div class="limit-point">
+                            <strong>Data Privacy:</strong> All uploaded medical scans must be fully anonymized in compliance with HIPAA and GDPR research ethics.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Credits Strip -->
+                <div class="credits-strip">
+                    <div class="credits-inner">
+                        <span><strong>Research Project:</strong> AlzFusion+ Multimodal Architecture</span>
+                        <span class="credit-divider">•</span>
+                        <span><strong>Principal Investigator:</strong> [Your Name / Research Group]</span>
+                        <span class="credit-divider">•</span>
+                        <span><strong>Institution:</strong> [University / Department]</span>
+                        <span class="credit-divider">•</span>
+                        <span><strong>Data Acknowledgement:</strong> Data used in preparation of this work were obtained from the Alzheimer's Disease Neuroimaging Initiative (ADNI).</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
 
         <!-- ================= FOOTER ================= -->
         <footer class="versatile-footer">
@@ -323,7 +655,7 @@
                 <div class="footer-col brand-col">
                     <div class="logo">
                         <img src="assets/Logo.png" alt="Logo" class="nav-logo">
-                        <span class="logo-text" style="color: black;">ALZFUSION<span class="plus-sign">+</span></span>
+                        <span class="logo-text">ALZFUSION<span class="plus-sign">+</span></span>
                     </div>
                     <p class="footer-bio">
                         An elite multimodal deep learning architecture engineered for advanced Alzheimer's disease research, fusing structural MRI and metabolic PET analytics.
@@ -338,10 +670,10 @@
                 <div class="footer-col">
                     <h4>Architecture</h4>
                     <ul class="footer-links">
-                        <li><a href="#">Multimodal Ingestion</a></li>
-                        <li><a href="#">Cross-Attention Core</a></li>
-                        <li><a href="#">Prognostic Staging</a></li>
-                        <li><a href="#">Latent Space Metrics</a></li>
+                        <li><a href="#roadmap">Multimodal Ingestion</a></li>
+                        <li><a href="#roadmap">Cross-Attention Core</a></li>
+                        <li><a href="#roadmap">Prognostic Staging</a></li>
+                        <li><a href="#model-card">Latent Space Metrics</a></li>
                     </ul>
                 </div>
 
@@ -349,9 +681,9 @@
                 <div class="footer-col">
                     <h4>Open Science</h4>
                     <ul class="footer-links">
-                        <li><a href="#">ADNI Cohort Access</a></li>
-                        <li><a href="#">Clinical Benchmarks</a></li>
-                        <li><a href="#">Whitepaper & Docs</a></li>
+                        <li><a href="https://adni.loni.usc.edu/" target="_blank" rel="noopener">ADNI Cohort Access</a></li>
+                        <li><a href="#model-card">Clinical Benchmarks</a></li>
+                        <li><a href="#methodology">Whitepaper &amp; Docs</a></li>
                         <li><a href="#">GitHub Repository</a></li>
                     </ul>
                 </div>
